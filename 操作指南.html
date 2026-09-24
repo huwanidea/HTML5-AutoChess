@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西游记自走棋操作指南</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        min-height: 100vh;
+        background: #090b10;
+        color: #e8d7ad;
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        line-height: 1.75;
+        padding: 36px 18px 48px;
+    }
+    .container { max-width: 1040px; margin: 0 auto; }
+    header {
+        border: 1px solid #7d5322;
+        background: linear-gradient(180deg, rgba(45, 30, 13, .92), rgba(14, 11, 8, .96));
+        padding: 28px 32px;
+        margin-bottom: 18px;
+    }
+    h1 { color: #ffd76a; font-size: 32px; margin-bottom: 8px; }
+    .subtitle { color: #c8a56a; font-size: 14px; }
+    .section {
+        border: 1px solid rgba(125, 83, 34, .9);
+        background: rgba(12, 14, 16, .92);
+        padding: 22px 26px;
+        margin: 16px 0;
+    }
+    h2 {
+        color: #ffd76a;
+        font-size: 20px;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(125, 83, 34, .65);
+    }
+    h3 { color: #f0c36a; font-size: 15px; margin: 10px 0 6px; }
+    p, li, td, th { font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid rgba(125, 83, 34, .55); padding: 8px 10px; vertical-align: top; }
+    th { color: #ffd76a; background: rgba(87, 54, 18, .45); text-align: left; }
+    ul, ol { padding-left: 22px; }
+    code {
+        color: #ffe2a1;
+        background: rgba(255, 215, 106, .08);
+        padding: 1px 5px;
+        border: 1px solid rgba(125, 83, 34, .45);
+    }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .card {
+        border: 1px solid rgba(125, 83, 34, .55);
+        background: rgba(0, 0, 0, .24);
+        padding: 12px 14px;
+    }
+    .tip {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-left: 3px solid #ffd76a;
+        background: rgba(255, 215, 106, .08);
+        color: #dfc58a;
+    }
+    .small { color: #ad9360; font-size: 13px; }
+    @media (max-width: 760px) {
+        .grid { grid-template-columns: 1fr; }
+        header, .section { padding: 18px; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+    <h1>西游记自走棋操作指南</h1>
+    <p class="subtitle">本科毕业设计演示说明 | HTML5 Canvas 2D + JavaScript | 最终提交版</p>
+</header>
+
+<section class="section">
+    <h2>1. 运行方式</h2>
+    <p>推荐使用本地静态服务器运行，避免浏览器在 <code>file://</code> 协议下限制图片资源读取。</p>
+    <table>
+        <tr><th>步骤</th><th>说明</th></tr>
+        <tr><td>进入目录</td><td><code>cd E:\Users\Administrator\Desktop\毕业设计\HTML5-AutoChess</code></td></tr>
+        <tr><td>启动服务器</td><td><code>python -m http.server 8010 --bind 127.0.0.1</code></td></tr>
+        <tr><td>打开游戏</td><td><code>http://127.0.0.1:8010/index.html</code></td></tr>
+    </table>
+    <p class="tip">如果只是快速查看，也可以双击 <code>index.html</code>；正式演示和截图建议使用本地服务器。</p>
+</section>
+
+<section class="section">
+    <h2>2. 游戏目标与核心循环</h2>
+    <p>游戏采用西游记主题自走棋规则。玩家通过购买英雄、搭配羁绊、调整站位和选择选秀英雄来强化阵容，在自动战斗中击败敌方或野怪。生命值归零则游戏结束。</p>
+    <div class="grid">
+        <div class="card">
+            <h3>备战阶段</h3>
+            <p>购买英雄、刷新商店、购买经验、拖拽英雄上阵、调整站位、观察羁绊。</p>
+        </div>
+        <div class="card">
+            <h3>选秀阶段</h3>
+            <p>从候选英雄中选择一个补强阵容。若备战席已满，系统会阻止继续获得英雄。</p>
+        </div>
+        <div class="card">
+            <h3>战斗阶段</h3>
+            <p>单位自动索敌、移动、攻击、释放技能、播放受击和死亡动画。野怪回合后可能获得西游主题法宝，作为少量属性补强。</p>
+        </div>
+        <div class="card">
+            <h3>结算阶段</h3>
+            <p>根据胜负发放金币或扣除生命，随后进入下一轮备战。</p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h2>3. 基础操作</h2>
+    <table>
+        <tr><th>操作</th><th>效果</th></tr>
+        <tr><td>点击商店英雄卡片</td><td>消耗金币购买英雄，英雄进入底部备战席。</td></tr>
+        <tr><td>拖拽备战席英雄到棋盘</td><td>将英雄上阵到我方区域。棋盘下半区为可放置区域。</td></tr>
+        <tr><td>拖拽棋盘英雄</td><td>调整站位或放回备战席。</td></tr>
+        <tr><td>右键英雄</td><td>出售英雄并返还金币。</td></tr>
+        <tr><td>悬停英雄</td><td>显示英雄属性、技能和羁绊信息。</td></tr>
+        <tr><td>悬停左侧羁绊</td><td>显示羁绊说明及相关英雄。</td></tr>
+        <tr><td>点击图鉴按钮</td><td>打开英雄图鉴，可查看英雄属性、费用、技能和羁绊。</td></tr>
+        <tr><td>点击设置按钮</td><td>打开设置面板，调整音效、速度和显示选项。</td></tr>
+    </table>
+</section>
+
+<section class="section">
+    <h2>4. 界面区域说明</h2>
+    <table>
+        <tr><th>区域</th><th>用途</th></tr>
+        <tr><td>顶部状态栏</td><td>显示金币、生命、回合、人口、阶段、倒计时、难度和功能按钮。</td></tr>
+        <tr><td>中央棋盘</td><td>9列×8行；上半区为敌方区域，下半区为我方区域。</td></tr>
+        <tr><td>左侧羁绊栏</td><td>显示当前阵容已拥有的六大同盟进度。</td></tr>
+        <tr><td>右侧商店</td><td>每轮固定5个槽位，购买后保留空槽位，不拉伸变形。</td></tr>
+        <tr><td>右下战斗日志</td><td>记录购买、选秀、战斗、技能、胜负与奖励信息。</td></tr>
+        <tr><td>底部备战席</td><td>9个候场站台，用于存放未上阵英雄。</td></tr>
+        <tr><td>我方区域左侧</td><td>等级经验条，显示当前等级、EXP进度和升级需求。</td></tr>
+    </table>
+</section>
+
+<section class="section">
+    <h2>5. 英雄、费用与升星</h2>
+    <table>
+        <tr><th>费用</th><th>代表英雄</th><th>定位</th></tr>
+        <tr><td>1费</td><td>沙悟净、花果山猴将、土地公公、蜘蛛精</td><td>前期过渡、基础羁绊启动</td></tr>
+        <tr><td>2费</td><td>猪悟能、小白龙、哪吒、白骨精、黄风怪、通臂猿猴、泾河龙王</td><td>前中期主力、阵容转型</td></tr>
+        <tr><td>3费</td><td>杨戬、牛魔王、红孩儿、金角大王、银角大王、六耳猕猴</td><td>核心输出与控制</td></tr>
+        <tr><td>4费</td><td>唐三藏、观音菩萨、镇元大仙、东海龙王、铁扇公主</td><td>高阶功能卡与体系核心</td></tr>
+        <tr><td>5费</td><td>齐天大圣、如来佛祖</td><td>终局核心、阵容上限</td></tr>
+    </table>
+    <p class="tip">三个同名同星级英雄可自动合成为更高星级。星级越高，基础属性越强，棋盘上的英雄显示尺寸也会略有差异。</p>
+</section>
+
+<section class="section">
+    <h2>6. 六大羁绊</h2>
+    <table>
+        <tr><th>羁绊</th><th>触发人数</th><th>效果</th><th>策略定位</th></tr>
+        <tr><td>大唐</td><td>2/4</td><td>生命上限提升</td><td>承伤与持续作战</td></tr>
+        <tr><td>花果山</td><td>2/4</td><td>暴击率提升</td><td>物理爆发</td></tr>
+        <tr><td>天庭</td><td>2/4/6</td><td>护甲与攻速提升</td><td>前中排压制</td></tr>
+        <tr><td>西天</td><td>2/3</td><td>法术强度提升</td><td>技能爆发</td></tr>
+        <tr><td>妖族</td><td>2/4/6</td><td>普攻附带灼烧</td><td>持续消耗</td></tr>
+        <tr><td>龙族</td><td>2/3</td><td>全属性提升</td><td>均衡成长</td></tr>
+    </table>
+</section>
+
+<section class="section">
+    <h2>7. 演示建议</h2>
+    <ol>
+        <li>先打开主界面，说明这是纯HTML5 Canvas 2D实现的西游记自走棋。</li>
+        <li>演示购买英雄、刷新商店、购买经验和拖拽布阵。</li>
+        <li>悬停英雄与羁绊，展示属性面板和羁绊说明。</li>
+        <li>点击跳过进入选秀，选择候选英雄。</li>
+        <li>进入战斗，展示移动、攻击、技能、受击和死亡动画。</li>
+        <li>打开英雄图鉴，说明英雄资料、技能描述和羁绊标签。</li>
+        <li>打开设置面板，展示音效、速度、难度等功能。</li>
+        <li>最后说明源码入口、资源目录和论文附录中的运行方式。</li>
+    </ol>
+</section>
+
+<section class="section">
+    <h2>8. 提交版本信息</h2>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>游戏名称</td><td>西游记自走棋</td></tr>
+        <tr><td>技术路线</td><td>HTML5 Canvas 2D + CSS + JavaScript</td></tr>
+        <tr><td>棋盘规格</td><td>9×8</td></tr>
+        <tr><td>英雄数量</td><td>24名西游记主题英雄</td></tr>
+        <tr><td>羁绊数量</td><td>6类：大唐、花果山、天庭、西天、妖族、龙族</td></tr>
+        <tr><td>运行入口</td><td><code>index.html</code></td></tr>
+        <tr><td>外部依赖</td><td>无后端依赖，浏览器即可运行</td></tr>
+    </table>
+    <p class="small">本指南与最终论文、任务书、开题报告中的系统描述保持一致。</p>
+</section>
+</div>
+</body>
+</html>
